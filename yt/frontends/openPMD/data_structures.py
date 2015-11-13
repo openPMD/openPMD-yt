@@ -1,5 +1,5 @@
 """
-OpenPMD data structures
+openPMD data structures
 
 
 
@@ -20,7 +20,7 @@ from yt.geometry.grid_geometry_handler import \
     GridIndex
 from yt.data_objects.static_output import \
     Dataset
-from .fields import OpenPMDFieldInfo
+from .fields import openPMDFieldInfo
 
 from yt.utilities.file_handler import \
     HDF5FileHandler
@@ -32,7 +32,7 @@ import os
 # This class defines the characteristics of the grids
 # Actually there is only one grid for the whole simolation box
 
-class OpenPMDGrid(AMRGridPatch):
+class openPMDGrid(AMRGridPatch):
     _id_offset = 0
     __slots__ = ["_level_id"]
     def __init__(self, id, index, level = -1):
@@ -44,12 +44,12 @@ class OpenPMDGrid(AMRGridPatch):
         self.Level = level
 
     def __repr__(self):
-        return "OpenPMDGrid_%04i (%s)" % (self.id, self.ActiveDimensions)
+        return "openPMDGrid_%04i (%s)" % (self.id, self.ActiveDimensions)
 # Defines which fields and particles are created and read from the hard disk
 # Furthermore it defines the characteristics of the grids
 
-class OpenPMDHierarchy(GridIndex):
-    grid = OpenPMDGrid
+class openPMDHierarchy(GridIndex):
+    grid = openPMDGrid
 
     def __init__(self, ds, dataset_type='openPMD'):
         self.dataset_type = dataset_type
@@ -157,9 +157,9 @@ class OpenPMDHierarchy(GridIndex):
 
 # A dataset object contains all the information of the simulation and
 # is intialized with yt.load()
-class OpenPMDDataset(Dataset):
-    _index_class = OpenPMDHierarchy
-    _field_info_class = OpenPMDFieldInfo
+class openPMDDataset(Dataset):
+    _index_class = openPMDHierarchy
+    _field_info_class = openPMDFieldInfo
 
     def __init__(self, filename, dataset_type='openPMD',
                  storage_filename=None,
@@ -231,11 +231,10 @@ class OpenPMDDataset(Dataset):
 	self.refine_by = 2
 
 
-        #
         # We also set up cosmological information.  Set these to zero if
         # non-cosmological.
 
-        # It is no cosmological simulation
+        # Not a cosmological simulation
         self.cosmological_simulation = 0   #<= int, 0 or 1
         self.current_redshift        = 0   #<= float
         self.omega_lambda            = 0   #<= float

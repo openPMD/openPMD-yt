@@ -1,5 +1,5 @@
 """
-OpenPMD-specific IO functions
+openPMD-specific IO functions
 
 
 
