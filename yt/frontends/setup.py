@@ -22,6 +22,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage("halo_catalog")
     config.add_subpackage("http_stream")
     config.add_subpackage("moab")
+    config.add_subpackage("openPMD")
     config.add_subpackage("owls")
     config.add_subpackage("owls_subfind")
     config.add_subpackage("ramses")
