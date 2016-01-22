@@ -2,3 +2,4 @@
 /build
 /dist
 /yt.egg-info
+__pycache__
