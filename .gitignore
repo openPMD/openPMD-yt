@@ -3,3 +3,6 @@
 /dist
 /yt.egg-info
 __pycache__
+__config__.py
+*.so
+*.c
