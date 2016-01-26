@@ -140,38 +140,38 @@ class openPMDHierarchy(GridIndex, openPMDBasePath):
 
         # The following code read the particle type and the name of the particle
         # field out of the file
-        for particle_type in self.dataset._handle[self.basePath + particlesPath].keys():
-            for group in self.dataset._handle[self.basePath + particlesPath + particle_type].keys():
+        if self.basePath + particlesPath in self.dataset._handle:
+           for particle_type in self.dataset._handle[self.basePath + particlesPath].keys():
+              for group in self.dataset._handle[self.basePath + particlesPath + particle_type].keys():
 
-                try:
+                 try:
 
                     key = self.dataset._handle[
-                        self.basePath +
-                        particlesPath +
-                        particle_type +
-                        "/" +
-                        group].keys(
-                    )
+                            self.basePath +
+                            particlesPath +
+                            particle_type +
+                            "/" +
+                            group].keys()
                     if key == []:
-                        particle_fields.append(particle_type + "_" + group)
-                        pass
+                       particle_fields.append(particle_type + "_" + group)
+                       pass
                     else:
-                        for direction in key:
-                            particle_fields.append(
-                                particle_type +
-                                "_" +
-                                group +
-                                "_" +
-                                direction)
-                            pass
+                       for direction in key:
+                          particle_fields.append(
+                             particle_type +
+                             "_" +
+                             group +
+                             "_" +
+                             direction)
+                          pass
 
-                except:
+                 except:
 
                     particle_fields.append(particle_type + "_" + group)
-        # The name of the particle field and the particle type are added to
-        # field_list
-        self.field_list.extend([(str(c).split("_")[0], str(c).replace(str(c).split("_")[0], "particle"))
-                               for c in particle_fields])
+                    # The name of the particle field and the particle type are added to
+                    # field_list
+                    self.field_list.extend([(str(c).split("_")[0], str(c).replace(str(c).split("_")[0], "particle"))
+                                            for c in particle_fields])
 
     def _count_grids(self):
         """
@@ -196,12 +196,15 @@ class openPMDHierarchy(GridIndex, openPMDBasePath):
             0] = self.dataset.domain_right_edge  # (N, 3) <= float64
         self.grid_dimensions[
             0] = self.dataset.domain_dimensions  # (N, 3) <= int
-        self.grid_particle_count[
-            0] = self.dataset._handle[
-                self.basePath +
-                particlesPath +
-                "/electrons/position/x"].shape[
-            0]  # (N, 1) <= int
+# TODO this disables particle reads for now
+#      Should might be set in _read_particles for each species,
+#      also each species might need its own grid (?)
+#        self.grid_particle_count[
+#            0] = self.dataset._handle[
+#                self.basePath +
+#                particlesPath +
+#                "/electrons/position/x"].shape[
+#            0]  # (N, 1) <= int
         # self.grid_levels = 1           #(N, 1) <= int
         # self.grids = np.empty(1, dtype='object') #(N, 1) <= grid objects
 
