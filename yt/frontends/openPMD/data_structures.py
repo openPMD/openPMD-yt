@@ -2,7 +2,6 @@
 openPMD data structures
 
 
-
 """
 
 #-----------------------------------------------------------------------------
@@ -28,17 +27,46 @@ from yt.utilities.file_handler import \
 import h5py
 import numpy as np
 import os
+from yt.utilities.logger import ytLogger as mylog
 
+class openPMDBasePathException(Exception) :
+    pass
 
-class openPMDBasePath:
-   def  _setBasePath(self, handle):
-       dataPath = handle.attrs["basePath"][:-3]
+class openPMDBasePath :
+    def  _setBasePath(self, handle) :
+        """
+        Set the base path for the first iteration found in the file.
+        TODO implement into distinct methods:
+            - __init__(self, handle)
+            - getIterations(self)
+            - getBasePath(self, iteration)
+        """
+        # basePath is fixed in openPMD 1.X to `/data/%T/`
+        dataPath = u"/data"
 
-       list_timesteps = []
-       for i in handle[dataPath].keys():
-           list_timesteps.append(i)
+        # if the file messed up the base path we avoid throwing a cluttered
+        # exception below while looking for iterations:
+        if handle.attrs["basePath"].decode("utf-8") != u"/data/%T/" :
+            raise openPMDBasePathException("openPMD: basePath is non-standard!")
 
-       self.basePath = "{}/{}/".format(dataPath.decode("utf-8") , list_timesteps[0])
+        # does `/data/` exist?
+        if not u"/data" in handle :
+            raise openPMDBasePathException("openPMD: group for basePath does not exist!")
+
+        # find iterations in basePath
+        list_iterations = []
+        for i in list(handle[dataPath].keys()) :
+            list_iterations.append(i)
+        mylog.warning("openPMD: found {} iterations in file".format(len(list_iterations)))
+
+        # We found no iterations in basePath
+        # TODO in the future (see above) this can be a mylog.warning instead of an error
+        if len(list_iterations) == 0 :
+            raise openPMDBasePathException("openPMD: no iterations found in basePath!")
+
+        # just handle the first iteration found
+        mylog.warning("openPMD: only choose to load first iteration in file")
+        self.basePath = "{}/{}/".format(dataPath, list_iterations[0])
 
 
 
@@ -76,9 +104,8 @@ class openPMDHierarchy(GridIndex, openPMDBasePath):
         self.dataset = ds
         self.index_filename = ds.parameter_filename
         self.directory = os.path.dirname(self.index_filename)
-        GridIndex.__init__(self, ds, dataset_type)
         self._setBasePath(self.dataset._handle)
-
+        GridIndex.__init__(self, ds, dataset_type)
 
     def _detect_output_fields(self):
         """
@@ -210,6 +237,11 @@ class openPMDDataset(Dataset, openPMDBasePath):
     """
     A dataset object contains all the information of the simulation and
     is intialized with yt.load()
+    
+    TODO Ideally, a data set object should only contain a single data set.
+         afaik, yt.load() can load multiple data sets and also supports
+         multiple iteration-loading if done that way, e.g., from a prefix
+         of files.
     """
     _index_class = openPMDHierarchy
     _field_info_class = openPMDFieldInfo
