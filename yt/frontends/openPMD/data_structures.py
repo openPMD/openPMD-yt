@@ -30,6 +30,19 @@ import numpy as np
 import os
 
 
+class openPMDBasePath:
+   def  _setBasePath(self, handle):
+       dataPath = handle.attrs["basePath"][:-3]
+
+       list_timesteps = []
+       for i in handle[dataPath].keys():
+           list_timesteps.append(i)
+
+       self.basePath = "{}/{}/".format(dataPath.decode("utf-8") , list_timesteps[0])
+
+
+
+
 class openPMDGrid(AMRGridPatch):
     """
     This class defines the characteristics of the grids
@@ -50,7 +63,7 @@ class openPMDGrid(AMRGridPatch):
         return "openPMDGrid_%04i (%s)" % (self.id, self.ActiveDimensions)
 
 
-class openPMDHierarchy(GridIndex):
+class openPMDHierarchy(GridIndex, openPMDBasePath):
     """
     Defines which fields and particles are created and read from the hard disk
     Furthermore it defines the characteristics of the grids
@@ -64,6 +77,8 @@ class openPMDHierarchy(GridIndex):
         self.index_filename = ds.parameter_filename
         self.directory = os.path.dirname(self.index_filename)
         GridIndex.__init__(self, ds, dataset_type)
+        self._setBasePath(self.dataset._handle)
+
 
     def _detect_output_fields(self):
         """
@@ -78,15 +93,14 @@ class openPMDHierarchy(GridIndex):
         (for a single population of particles) is "io".
         look for fluid fields
         """
-        basePath = self.dataset._handle.attrs["basePath"]
         meshesPath = self.dataset._handle.attrs["meshesPath"]
         particlesPath = self.dataset._handle.attrs["particlesPath"]
         output_fields = []
 
         # Read the names of the non-particle fields and add them to output_fields
-        for group in self.dataset._handle[basePath + meshesPath].keys():
+        for group in self.dataset._handle[self.basePath + meshesPath].keys():
             try:
-                for direction in self.dataset._handle[basePath + meshesPath + group].keys():
+                for direction in self.dataset._handle[self.basePath + meshesPath + group].keys():
                     output_fields.append(group + "_" + direction)
             except:
                 output_fields.append(group)
@@ -99,13 +113,13 @@ class openPMDHierarchy(GridIndex):
 
         # The following code read the particle type and the name of the particle
         # field out of the file
-        for particle_type in self.dataset._handle[basePath + particlesPath].keys():
-            for group in self.dataset._handle[basePath + particlesPath + particle_type].keys():
+        for particle_type in self.dataset._handle[self.basePath + particlesPath].keys():
+            for group in self.dataset._handle[self.basePath + particlesPath + particle_type].keys():
 
                 try:
 
                     key = self.dataset._handle[
-                        basePath +
+                        self.basePath +
                         particlesPath +
                         particle_type +
                         "/" +
@@ -146,7 +160,6 @@ class openPMDHierarchy(GridIndex):
         simulationsbox
         """
         # This needs to fill the following arrays, where N is self.num_grids:
-        basePath = self.dataset._handle.attrs["basePath"]
         meshesPath = self.dataset._handle.attrs["meshesPath"]
         particlesPath = self.dataset._handle.attrs["particlesPath"]
 
@@ -158,7 +171,7 @@ class openPMDHierarchy(GridIndex):
             0] = self.dataset.domain_dimensions  # (N, 3) <= int
         self.grid_particle_count[
             0] = self.dataset._handle[
-                basePath +
+                self.basePath +
                 particlesPath +
                 "/electrons/position/x"].shape[
             0]  # (N, 1) <= int
@@ -193,7 +206,7 @@ class openPMDHierarchy(GridIndex):
         self.max_level = 0
 
 
-class openPMDDataset(Dataset):
+class openPMDDataset(Dataset, openPMDBasePath):
     """
     A dataset object contains all the information of the simulation and
     is intialized with yt.load()
@@ -214,9 +227,11 @@ class openPMDDataset(Dataset):
         # Opens a HDF5 file and stores its file handle in _handle
         # All _handle objects refers to the file
         self._handle = HDF5FileHandler(filename)
+        self._setBasePath(self._handle)
         Dataset.__init__(self, filename, dataset_type,
                          units_override=units_override)
         self.storage_filename = storage_filename
+
 
     def _set_code_unit_attributes(self):
         """
@@ -248,10 +263,9 @@ class openPMDDataset(Dataset):
         # read parameters out .h5 file
         f = self._handle
 
-        basePath = f.attrs["basePath"]
         meshesPath = f.attrs["meshesPath"]
         particlesPath = f.attrs["particlesPath"]
-        positionPath = basePath + particlesPath + "/electrons/position/"
+        positionPath = self.basePath + particlesPath + "/electrons/position/"
 
         # This defines the size of the simulaion box
         # TODO !!! The size is actually hardcoded
@@ -270,7 +284,7 @@ class openPMDDataset(Dataset):
         fshape = []
         for i in range(3):
             try:
-                fshape.append(f[basePath + meshesPath + "/B/x"].shape[i])
+                fshape.append(f[self.basePath + meshesPath + "/B/x"].shape[i])
             except:
                 fshape.append(1)
         self.domain_dimensions = np.array(
@@ -283,7 +297,7 @@ class openPMDDataset(Dataset):
             False,
             False,
             False)  # <= three-element tuple of booleans
-        self.current_time = f[f.attrs["basePath"]].attrs[
+        self.current_time = f[self.basePath].attrs[
             "time"]  # <= simulation time in code units
         self.refine_by = 2
 
