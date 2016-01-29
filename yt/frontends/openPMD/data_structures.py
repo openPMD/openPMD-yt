@@ -298,42 +298,46 @@ class openPMDDataset(Dataset, openPMDBasePath):
         # read parameters out .h5 file
         f = self._handle
 
-        meshesPath = f.attrs["meshesPath"]
-        particlesPath = f.attrs["particlesPath"]
+        meshesPath = f.attrs["meshesPath"].decode()
+        particlesPath = f.attrs["particlesPath"].decode()
         positionPath = self.basePath + particlesPath + "/electrons/position/"
 
         # This defines the size of the simulaion box
-        # TODO !!! The size is actually hardcoded
         self.unique_identifier = 0  # no identifier
         self.parameters = 0  # no additional parameters  <= full of code-specific items of use
-        self.domain_left_edge = np.array(
-            [-1.49645302e-05,
-             -1.00407931e-06,
-             -3.48883032e-06])  # <= array of float
-        self.domain_right_edge = np.array(
-            [1.49645302e-05,
-             1.41565351e-06,
-             1.54200006e-05])  # <= array of float64
-        self.dimensionality = 3  # <= int
 
-        fshape = []
-        for i in range(3):
-            try:
-                fshape.append(f[self.basePath + meshesPath + "/B/x"].shape[i])
-            except:
-                fshape.append(1)
-        self.domain_dimensions = np.array(
-            [fshape[0],
-             fshape[2],
-                fshape[1]],
-            dtype="int64")  # <= array of int64
+        # TODO At this point one assumes the whole file/simulation
+        #      contains for all mesh records the same dimensionality and shapes
+        # TODO Support particle-only files
+        # pick first field
+        try :
+            firstIteration = list(f["/data/"].keys())[0]
+            meshes = f["/data/" + str(firstIteration) + "/" + meshesPath]
+            firstMeshName = list(meshes.keys())[0]
+            firstMesh = meshes[firstMeshName]
+            if type(firstMesh) == h5py.Dataset :
+                fshape = firstMesh.shape
+            else :
+                fshape = firstMesh[list(firstMesh.keys())[0]].shape
+        except :
+          print("ERROR: Can only read files that have at least one mesh entry!")
 
-        self.periodicity = (
-            False,
-            False,
-            False)  # <= three-element tuple of booleans
+        self.dimensionality = len(fshape) # <= int
+
+        # TODO fill me with actual start and end positions in reasonable units
+        self.domain_left_edge  = np.zeros_like(fshape, dtype=np.float64)
+        self.domain_right_edge = np.ones_like(fshape, dtype=np.float64)
+
+        # gridding of the meshes (assumed all mesh entries are on the same mesh)
+        self.domain_dimensions = np.array(fshape, dtype=np.int64)
+
+        # TODO assumes non-peridic boundary conditions
+        self.periodicity = np.zeros_like(fshape, dtype=np.bool)
+
         self.current_time = f[self.basePath].attrs[
             "time"]  # <= simulation time in code units
+
+        # TODO what does this parameter mean?
         self.refine_by = 2
 
         # We also set up cosmological information.  Set these to zero if
