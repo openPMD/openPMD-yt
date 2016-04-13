@@ -1,8 +1,18 @@
-openPMD frontend for yt-project.org
-===================================
+openPMD frontend for yt-project.org (Draft)
+===========================================
 
-This is a draft of a HDF5 reader implementation for openPMD
-in yt-project.org
+### TL;DR
+
+**If you are looking for the official yt-project repository**,
+here is the official link to their bitbucket:
+
+  https://bitbucket.org/yt_analysis/yt/
+
+
+### This Repository
+
+This is a **draft** of a HDF5 reader implementation for
+[openPMD](http://openPMD.org) in [yt-project.org](http://yt-project.org/)
 
 Some sizes are still fixed to our example data sets and particlePatch
 supports needs to be added for parallel data processing.
