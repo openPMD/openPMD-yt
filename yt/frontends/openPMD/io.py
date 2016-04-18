@@ -22,11 +22,12 @@ from yt.utilities.logger import ytLogger as mylog
 from yt.geometry.selection_routines import mask_fill, AlwaysSelector
 import h5py
 import numpy as np
+from .data_structures import openPMDBasePath
 
 _convert_mass = ("particle_mass", "mass")
 
 
-class IOHandlerOpenPMD(BaseIOHandler):
+class IOHandlerOpenPMD(BaseIOHandler, openPMDBasePath):
     """
     This class loads the data from the HDF5-file.
     TODO Data should be loaded chunk-wise to support parallelism. Fields can be chunked arbitrarily
@@ -40,7 +41,7 @@ class IOHandlerOpenPMD(BaseIOHandler):
         self.ds = ds
         # ds._handle is a HDF5-file which is loaded with h5py.File(filename)
         self._handle = ds._handle
-        self.basePath = self._handle["/"].attrs["basePath"]
+        self._setBasePath(self._handle)
         self.meshPath = self._handle["/"].attrs["meshesPath"]
         self.particlesPath = self._handle["/"].attrs["particlesPath"]
 
